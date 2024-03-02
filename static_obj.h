@@ -1,14 +1,14 @@
 #ifndef STATIC_OBJ_H
 #define STATIC_OBJ_H
-#include <godot_cpp/classes/sprite2d.hpp>
+#include "map_renderableobj.h"
 #include "c_ptr.h"
 #include "id_image.h"
 #include "ani_data.h"
 namespace godot
 {
-  class StaticObj : public Sprite2D
+  class StaticObj : public MapRenerobj
   {
-    GDCLASS(StaticObj, Sprite2D)
+    GDCLASS(StaticObj, MapRenerobj)
   protected:
     static void _bind_methods();
 
@@ -26,9 +26,7 @@ namespace godot
     int frame;
     int ani_frame;
     int file_size;
-    int render_prority;
     void set_effect(int value);
-    void set_color(int value);
     void load(Ref<CPtr> &ptr);
     void load_ani_data(Ref<CPtr> &ptr);
     virtual void _ready() override;

@@ -4,6 +4,7 @@
 #include "spline.h"
 #include "spline_mgr.h"
 #include "key_frame.h"
+#include "utils.h"
 #include <godot_cpp/classes/engine.hpp>
 // #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -38,12 +39,15 @@ void StaticObj::load(Ref<CPtr> &ptr)
   fixed_bound.position.y = ptr->read_s32();
   fixed_bound.size.x = ptr->read_s32();
   fixed_bound.size.y = ptr->read_s32();
-  render_center.x = ptr->read_s32();
-  render_center.y = ptr->read_s32();
+  if (version != 4)
+  {
+    render_center.x = ptr->read_s32();
+    render_center.y = ptr->read_s32();
+  }
 
   image_center.x = int(fixed_bound.size.x) >> 1;
   image_center.y = int(fixed_bound.size.y) >> 1;
-  set_color(ptr->read_u32());
+  set_modulate(Utils::hex_to_color(ptr->read_u32()));
   set_rotation(ptr->read_float());
   float scale_x = ptr->read_float();
   float scale_y = ptr->read_float();
@@ -52,7 +56,17 @@ void StaticObj::load(Ref<CPtr> &ptr)
   int render_lv = ptr->read_u32();
   render_prority = ptr->read_u32();
   set_offset((render_center - image_center));
-  if (version == 5)
+  if (version == 4)
+  {
+    //   if (ptr->read_bool())
+    // {
+    //   ptr->set_pos(pos + 0x164);
+    //   load_ani_data(ptr);
+    // }
+    ptr->pos_add(4);
+    id_image = ResourceLoader::get_singleton()->load(ptr->get_str());
+  }
+  else if (version == 5)
   {
     ptr->set_pos(pos + 0x14c);
     bool is_ani = ptr->read_bool();
@@ -79,14 +93,6 @@ void StaticObj::load(Ref<CPtr> &ptr)
   ptr->set_pos(pos + file_size);
   set_frame(0);
 }
-void StaticObj::set_color(int value)
-{
-  float b = ((value >> 0) & 0xff) / 255.0;
-  float g = ((value >> 8) & 0xff) / 255.0;
-  float r = ((value >> 16) & 0xff) / 255.0;
-  float a = ((value >> 24) & 0xff) / 255.0;
-  set_modulate(Color(r, g, b, a));
-}
 void StaticObj::set_effect(int value)
 {
   int a = value >> 8;
@@ -102,23 +108,23 @@ void StaticObj::_physics_process(double delta)
   {
     return;
   }
-    ani_time += delta;
-    Ref<TImage> image = Resource::cast_to<TImage>(id_image->images[frame]);
-    while (ani_time > image->next_frame_time)
+  ani_time += delta;
+  Ref<TImage> image = Resource::cast_to<TImage>(id_image->images[frame]);
+  while (ani_time > image->next_frame_time)
+  {
+    ani_time -= image->next_frame_time;
+    if (frame >= id_image->frames - 1)
     {
-      ani_time -= image->next_frame_time;
-      if (frame >= id_image->frames - 1)
-      {
-        set_frame(0);
-      }
-      else
-      {
-        set_frame(++frame);
-      }
+      set_frame(0);
+    }
+    else
+    {
+      set_frame(++frame);
     }
   }
-  void StaticObj::_ready()
-  {
+}
+void StaticObj::_ready()
+{
   if (id_image.is_null())
   {
     return;

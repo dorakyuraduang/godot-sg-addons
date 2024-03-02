@@ -1,5 +1,7 @@
 #include "map_layer.h"
 #include <godot_cpp/variant/utility_functions.hpp>
+#include "map_renderableobj.h"
+#include "group_obj.h"
 using namespace godot;
 
 MapLayer::MapLayer()
@@ -31,8 +33,23 @@ void MapLayer::load_form_file(Ref<CPtr> &ptr)
   layer_type = ptr->read_u32();
   scroll_speed.x = ptr->read_u32();
   scroll_speed.y = ptr->read_u32();
-  ptr->pos_add(52);
-  int group_id = ptr->read_u32();
+  ptr->pos_add(48);
+  int group_pos = pos + ptr->read_u32();
+  int group_size = ptr->read_u32();
+  int c_pos = ptr->get_pos();
+  ptr->set_pos(group_pos);
+  if (group_size > 0)
+  {
+    int group_count = ptr->read_u32();
+    for (int i = 0; i < group_count; i++)
+    {
+      GroupObj *group_obj = memnew(GroupObj);
+      group_obj->initialize_class();
+      group_obj->load(ptr);
+      objects.append(group_obj);
+    }
+  }
+  ptr->set_pos(c_pos);
   ptr->pos_add(104);
   int static_obj_count = ptr->read_u32();
   for (int i = 0; i < static_obj_count; i++)
@@ -40,24 +57,24 @@ void MapLayer::load_form_file(Ref<CPtr> &ptr)
     StaticObj *static_obj = memnew(StaticObj);
     static_obj->initialize_class();
     static_obj->load(ptr);
-    static_objects.append(static_obj);
+    objects.append(static_obj);
   }
-  static_objects.sort_custom(callable_mp(this, &MapLayer::static_obj_sort));
+  objects.sort_custom(callable_mp(this, &MapLayer::static_obj_sort));
   Vector2 map_size = game_map->get_map_size();
   Vector2 view_port_offset = game_map->get_viewport_offset();
   Vector2 motion_scale = Vector2(1, 1);
-  float x_scale =  layer_size.x/(map_size.x * 800);
-  float y_scale = layer_size.y /(map_size.y * 600);
+  float x_scale = (layer_size.x - 800) / ((map_size.x - 1) * 800);
+  float y_scale = (layer_size.y - 600) / ((map_size.y - 1) * 600);
   bool is_x_move = false;
   bool is_y_move = false;
   bool is_x_mirroing = false;
   bool is_y_mirroing = false;
   if (layer_type == 0x10001)
   {
-    is_x_mirroing = true;
-    is_y_mirroing = true;
+    is_x_mirroing = false;
+    is_y_mirroing = false;
     is_x_move = true;
-    is_y_move =true;
+    is_y_move = true;
   }
   else if (layer_type == 0x10003)
   {
@@ -103,11 +120,12 @@ void MapLayer::load_form_file(Ref<CPtr> &ptr)
   if (layer_size.x <= 800)
   {
     layer_pos.x = 0;
+    motion_scale.x = 0;
   }
   if (layer_size.y <= 600)
   {
     layer_pos.y = 0;
-    motion_scale.y=0;
+    motion_scale.y = 0;
   }
   parallax_layer->set_motion_scale(motion_scale);
   parallax_layer->set_position(layer_pos);
@@ -139,14 +157,15 @@ Vector2 MapLayer::get_scroll_speed()
 void MapLayer::_ready()
 {
   add_child(parallax_layer);
-  for (int i = 0; i < static_objects.size(); i++)
+  for (int i = 0; i < objects.size(); i++)
   {
-    parallax_layer->add_child(Object::cast_to<Node>(static_objects[i]));
+    Object::cast_to<Node2D>(objects[i])->set_z_index(0);
+    parallax_layer->add_child(Object::cast_to<Node2D>(objects[i]));
   }
 }
 bool MapLayer::static_obj_sort(Variant a, Variant b)
 {
-  return Object::cast_to<StaticObj>(a)->render_prority < Object::cast_to<StaticObj>(b)->render_prority;
+  return Object::cast_to<MapRenerobj>(a)->render_prority < cast_to<MapRenerobj>(b)->render_prority;
 }
 void MapLayer::_bind_methods()
 {

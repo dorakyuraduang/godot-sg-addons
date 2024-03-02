@@ -14,6 +14,7 @@
 #include "line_node.h"
 #include "key_frame.h"
 #include "spline_mgr.h"
+#include "group_obj.h"
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
@@ -21,6 +22,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include "c_ptr.h"
 #include "image_loader.h"
+#include "map_renderableobj.h"
 using namespace godot;
 Ref<ImageLoader> image_loader;
 void initialize_sg_module(ModuleInitializationLevel p_level)
@@ -35,6 +37,7 @@ void initialize_sg_module(ModuleInitializationLevel p_level)
 	ClassDB::register_class<UiImage>();
 	ClassDB::register_class<IdImage>();
 	ClassDB::register_class<TImage>();
+	ClassDB::register_class<MapRenerobj>();
 	ClassDB::register_class<Spline>();
 	ClassDB::register_class<LineNode>();
 	ClassDB::register_class<BezierNode>();
@@ -42,6 +45,7 @@ void initialize_sg_module(ModuleInitializationLevel p_level)
 	ClassDB::register_class<StaticObj>();
 	ClassDB::register_class<GameMap>();
 	ClassDB::register_class<AniData>();
+	ClassDB::register_class<GroupObj>();
 	ClassDB::register_class<KeyFrame>();
 	image_loader.instantiate();
 	SplineMgr::instance();

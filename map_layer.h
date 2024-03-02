@@ -23,7 +23,7 @@ namespace godot
     Vector2 grid_size;
     int file_size;
     MapLayer();
-    Array static_objects;
+    Array objects;
     ~MapLayer();
     void load_form_file(Ref<CPtr> &ptr);
     virtual void _ready() override;
