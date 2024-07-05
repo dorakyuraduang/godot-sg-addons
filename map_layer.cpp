@@ -17,7 +17,6 @@ MapLayer::~MapLayer()
 }
 void MapLayer::load_form_file(Ref<CPtr> &ptr)
 {
-
   int pos = ptr->get_pos();
   ptr->pos_add(40);
   file_size = ptr->read_u32();
@@ -51,13 +50,16 @@ void MapLayer::load_form_file(Ref<CPtr> &ptr)
   }
   ptr->set_pos(c_pos);
   ptr->pos_add(104);
-  int static_obj_count = ptr->read_u32();
-  for (int i = 0; i < static_obj_count; i++)
+  if ((ptr->get_pos()+116)!=(pos+file_size))
   {
-    StaticObj *static_obj = memnew(StaticObj);
-    static_obj->initialize_class();
-    static_obj->load(ptr);
-    objects.append(static_obj);
+    int static_obj_count = ptr->read_u32();
+    for (int i = 0; i < static_obj_count; i++)
+    {
+      StaticObj *static_obj = memnew(StaticObj);
+      static_obj->initialize_class();
+      static_obj->load(ptr);
+      objects.append(static_obj);
+    }
   }
   objects.sort_custom(callable_mp(this, &MapLayer::static_obj_sort));
   Vector2 map_size = game_map->get_map_size();
